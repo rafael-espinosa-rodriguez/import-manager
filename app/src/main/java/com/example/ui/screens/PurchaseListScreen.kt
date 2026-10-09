@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
@@ -94,6 +95,7 @@ fun PurchaseListScreen(viewModel: MainViewModel) {
     // Dialogs state
     var purchaseToDelete by remember { mutableStateOf<Purchase?>(null) }
     var purchaseToSell by remember { mutableStateOf<Purchase?>(null) }
+    var purchaseToShare by remember { mutableStateOf<Purchase?>(null) }
     var showCustomerDialog by remember { mutableStateOf<Customer?>(null) }
     var customerToDelete by remember { mutableStateOf<Customer?>(null) }
 
@@ -269,7 +271,8 @@ fun PurchaseListScreen(viewModel: MainViewModel) {
                             },
                             onDuplicate = { viewModel.duplicatePurchase(purchase) },
                             onDelete = { purchaseToDelete = purchase },
-                            onSell = { purchaseToSell = purchase }
+                            onSell = { purchaseToSell = purchase },
+                            onShare = { purchaseToShare = purchase }
                         )
                     }
                     item { Spacer(modifier = Modifier.height(20.dp)) }
@@ -608,6 +611,21 @@ fun PurchaseListScreen(viewModel: MainViewModel) {
             }
         )
     }
+
+    // Share Dialog (WhatsApp / Facebook)
+    purchaseToShare?.let { p ->
+        val salesForThis = sales.filter { it.purchaseId == p.id }
+        val qtySold = salesForThis.sumOf { it.quantitySold }
+        val stockRemaining = p.quantity - qtySold
+
+        com.example.ui.components.SharePreviewDialog(
+            productName = p.name,
+            initialText = com.example.lib.ShareHelper.buildShareText(p, stockRemaining),
+            photoBase64 = p.photoBase64,
+            onDismiss = { purchaseToShare = null },
+            onNotify = { viewModel.showToast(it) }
+        )
+    }
 }
 
 @Composable
@@ -617,7 +635,8 @@ fun PurchaseItemCard(
     onEdit: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
-    onSell: () -> Unit
+    onSell: () -> Unit,
+    onShare: () -> Unit
 ) {
     val totalCost = (purchase.quantity * purchase.unitCostUsd) + (purchase.quantity * purchase.unitShippingCostUsd) + (purchase.otherExpensesUsd ?: 0.0)
     
@@ -765,7 +784,7 @@ fun PurchaseItemCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Secondary actions: Edit, Duplicate, Delete
+                // Secondary actions: Edit, Duplicate, Share, Delete
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     IconButton(
                         onClick = onEdit,
@@ -785,6 +804,16 @@ fun PurchaseItemCard(
                             .background(Color(0xFF262626))
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = "Duplicar", tint = Color.White, modifier = Modifier.size(16.dp))
+                    }
+
+                    IconButton(
+                        onClick = onShare,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF10B981))
+                    ) {
+                        Icon(Icons.Default.Share, contentDescription = "Compartir", tint = Color.White, modifier = Modifier.size(16.dp))
                     }
 
                     IconButton(

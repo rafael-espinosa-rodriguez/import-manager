@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -41,6 +42,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -85,6 +87,7 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
     var name by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var copyText by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("1") }
     var unitCostUsd by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("Planificado") }
@@ -108,6 +111,7 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
     // Dropdown expanded states
     var statusExpanded by remember { mutableStateOf(false) }
     var methodExpanded by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     // Init form when editing
     LaunchedEffect(editingPurchase) {
@@ -116,6 +120,7 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
             name = p.name
             category = p.category ?: ""
             description = p.description ?: ""
+            copyText = p.marketingCopy ?: ""
             quantity = p.quantity.toString()
             unitCostUsd = p.unitCostUsd.toString()
             status = p.status
@@ -136,6 +141,7 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
             name = ""
             category = ""
             description = ""
+            copyText = ""
             quantity = "1"
             unitCostUsd = ""
             status = "Planificado"
@@ -318,6 +324,50 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SectionHeader(title = "COPY PARA COMPARTIR (OPCIONAL)")
+
+            OutlinedTextField(
+                value = copyText,
+                onValueChange = { copyText = it },
+                label = { Text("Copy de venta para WhatsApp / Facebook") },
+                placeholder = { Text("Texto que promocionará tu producto. Si lo dejas vacío se usará uno genérico con nombre, precio y stock.") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .testTag("form_input_copy"),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                ),
+                shape = RoundedCornerShape(12.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = { showShareDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("form_share_button"),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Compartir Producto",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -680,7 +730,8 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
                             otherExpensesUsd = otherExpensesUsd.toDoubleOrNull(),
                             potentialSellingPriceUsd = sellingPriceDouble,
                             trackingNumber = trackingNumber.ifBlank { null },
-                            shippingAgency = shippingAgency.ifBlank { null }
+                            shippingAgency = shippingAgency.ifBlank { null },
+                            marketingCopy = copyText.ifBlank { null }
                         )
                     )
                 },
@@ -705,6 +756,39 @@ fun PurchaseFormScreen(viewModel: MainViewModel) {
 
             Spacer(modifier = Modifier.height(40.dp))
         }
+    }
+
+    if (showShareDialog) {
+        val previewPurchase = Purchase(
+            id = editingPurchase?.id ?: 0,
+            photoBase64 = photoBase64,
+            name = name.ifBlank { "Producto" },
+            category = category.ifBlank { null },
+            description = description.ifBlank { null },
+            quantity = qtyInt,
+            unitCostUsd = costDouble,
+            status = status,
+            purchaseDate = purchaseDate,
+            shippingMethod = shippingMethod,
+            weightKg = weightKg.toDoubleOrNull(),
+            lengthCm = lengthCm.toDoubleOrNull(),
+            widthCm = widthCm.toDoubleOrNull(),
+            heightCm = heightCm.toDoubleOrNull(),
+            unitShippingCostUsd = shippingDouble,
+            otherExpensesUsd = otherDouble,
+            potentialSellingPriceUsd = sellingPriceDouble,
+            trackingNumber = trackingNumber.ifBlank { null },
+            shippingAgency = shippingAgency.ifBlank { null },
+            marketingCopy = copyText.ifBlank { null }
+        )
+
+        com.example.ui.components.SharePreviewDialog(
+            productName = previewPurchase.name,
+            initialText = com.example.lib.ShareHelper.buildShareText(previewPurchase),
+            photoBase64 = photoBase64,
+            onDismiss = { showShareDialog = false },
+            onNotify = { viewModel.showToast(it) }
+        )
     }
 }
 

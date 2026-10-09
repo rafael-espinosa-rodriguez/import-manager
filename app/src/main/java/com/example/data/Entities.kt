@@ -24,7 +24,8 @@ data class Purchase(
     val otherExpensesUsd: Double? = null,
     val potentialSellingPriceUsd: Double,
     val trackingNumber: String? = null,
-    val shippingAgency: String? = null
+    val shippingAgency: String? = null,
+    val marketingCopy: String? = null
 )
 
 @Entity(

@@ -48,6 +48,9 @@ object BackupHelper {
             pObj.put("unitShippingCostUsd", p.unitShippingCostUsd)
             pObj.put("otherExpensesUsd", p.otherExpensesUsd ?: JSONObject.NULL)
             pObj.put("potentialSellingPriceUsd", p.potentialSellingPriceUsd)
+            pObj.put("trackingNumber", p.trackingNumber ?: JSONObject.NULL)
+            pObj.put("shippingAgency", p.shippingAgency ?: JSONObject.NULL)
+            pObj.put("marketingCopy", p.marketingCopy ?: JSONObject.NULL)
             purchasesArray.put(pObj)
         }
         dataObj.put("purchases", purchasesArray)
@@ -122,7 +125,10 @@ object BackupHelper {
                     heightCm = if (pObj.isNull("heightCm")) null else pObj.getDouble("heightCm"),
                     unitShippingCostUsd = pObj.getDouble("unitShippingCostUsd"),
                     otherExpensesUsd = if (pObj.isNull("otherExpensesUsd")) null else pObj.getDouble("otherExpensesUsd"),
-                    potentialSellingPriceUsd = pObj.getDouble("potentialSellingPriceUsd")
+                    potentialSellingPriceUsd = pObj.getDouble("potentialSellingPriceUsd"),
+                    trackingNumber = if (pObj.isNull("trackingNumber")) null else pObj.getString("trackingNumber"),
+                    shippingAgency = if (pObj.isNull("shippingAgency")) null else pObj.getString("shippingAgency"),
+                    marketingCopy = if (pObj.isNull("marketingCopy")) null else pObj.getString("marketingCopy")
                 )
             )
         }
